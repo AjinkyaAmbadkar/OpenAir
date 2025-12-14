@@ -1,8 +1,8 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from bson import ObjectId
-from datetime import datetime
 
 from database import airports_col, flights_col
 from models import FlightIn, FlightOut
@@ -10,14 +10,27 @@ from utils import oid_str
 
 app = FastAPI(title="OpenAir API")
 
-# React dev server CORS
+
+# =========================
+# CORS (Local + Vercel)
+# =========================
+# In Render env vars set:
+# CORS_ORIGINS=https://<your-vercel-app>.vercel.app,http://localhost:5173
+origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+allowed_origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/")
+async def root():
+    return {"message": "OpenAir backend running", "health": "/api/health"}
 
 @app.get("/api/health")
 async def health():
